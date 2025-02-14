@@ -1,4 +1,4 @@
-%% hcp 4 个run的平均GV，gvTOPO
+%% The average GVtopo of 4 runs in HCP
 clear;
 load('F:\Projects\GV\HCP\result\FunRawCRSF\ICC\ICC_GV.mat');
 result_path='F:\Projects\GV\fig\BrainMap\HCP';
@@ -10,7 +10,7 @@ for irun=1:4
 end
 
 
-%% GV / GS的年龄轨迹
+%% Age pattern of GV/GS
 clear;
 load('F:\Projects\GV\lifespan\result\FunRawARWSCF\Age_effect\AgePattern_GV_GSR.mat');
 figure(1);
@@ -30,45 +30,6 @@ set(gcf,'unit','centimeters','position',[20 10 22 8]);
 
 [a,I]=min(feval(fitresult_mean.power,age));
 age_min=age(I);
-
-
-%% HCP 四个RUN的平均脑图-GVtopo/GStopo
-clc;clear
-result_path='F:\Projects\GV\HCP\result\FunRawCRSF\ICC';
-cd(result_path)
-data_path='F:\Projects\GV\HCP\result\FunRawCRSF\GS\seperate';
-sub_path=dir(data_path);
-sub_path(1:2)=[];
-mask_path='F:\Mask\BN_Atlas_246_3mm.nii';
-header_path='F:\DataBase\MDD-SPRBS\Data\SRPBS_MDD\KUT\Raw4DARWSCF\Band_0.0012_to_0.0728\sub-0670\CovRegressed_4DVolume_Filtered.nii';
-
-for irun=1:4
-    path_now=dir(fullfile(sub_path(irun).folder,sub_path(irun).name));
-    path_now(1:2)=[];
-    
-    for isub=1:length(path_now)
-        load(fullfile(path_now(isub).folder,path_now(isub).name));
-        TOPO(isub,irun,:)=gs_topo.z;
-    end
-    TOPO_mean(irun,:)=mean(squeeze(TOPO(:,irun,:)),1);
-    
-    fname1=strcat('GS_',sub_path(irun).name);
-    y_vec2nii(TOPO_mean(irun,:),mask_path,header_path,fname1)
-end
-[r_meantopo,p_meantopo]=corr(TOPO_mean');  % 平均TOPO的相关
-
-% 所以被试四个RUN之间相关的平均
-for isub=1:82
-    [r,p]=corr(squeeze(TOPO(1,:,:))');
-    R12(isub)=r(1,2);   % REST1_LR CORR REST1_RL
-    R13(isub)=r(1,3);   % REST1_LR CORR REST2_LR
-end
-R12_mean=mean(R12);
-R13_mean=mean(R13);
-
-save CORR.mat TOPO_mean r_meantopo p_meantopo R12 R12_mean R13 R13_mean
-
-
 
 
 
@@ -124,9 +85,7 @@ gstopo_pos=TOPO_r(245,:)';
 gstopo_neg=TOPO_r(197,:)';
 age=age';
 
-Out=y_Atlas246toAAL116([key_gvtopo_pos,key_gvtopo_neg,key_gstopo_pos,key_gstopo_neg]);
-
-%%
+%% Brain map in HCP
 save_path='F:\Projects\GV\Figure\HCP';
 mkdir(save_path)
 cd(save_path)
@@ -135,7 +94,6 @@ nii_dir=dir(data_path);
 nii_dir(1:2)=[];
 for i=1:length(nii_dir)
     nii_path=fullfile(data_path,nii_dir(i).name);
-    %     data_dir=[data_path,filesep,['ICC_slow',num2str(i),'.nii']];
     
     [BrainNetViewerPath,fileN,extn]=fileparts(which('BrainNet.m'));
     SurfFileName=[BrainNetViewerPath,filesep,'Data',filesep,'SurfTemplate',filesep,'BrainMesh_ICBM152_smoothed.nv'];
@@ -150,20 +108,6 @@ for i=1:length(nii_dir)
     
     close all
 end
-    
-    
-%% check the age pattern of GVtopo and GStopo
-clear;clc
-load('F:\Projects\GV\NKI-RS\result\FunRawARWSCF\Age_effect\AgePattern_GVTOPO.mat');
-AgePattern_gvtopo=AgePattern_TOPO_r.choose;
-load('F:\Projects\GV\NKI-RS\result\FunRawARWSCF\Age_effect\AgePattern_GSTOPO.mat');
-AgePattern_gstopo=AgePattern_TOPO_r.choose;
-label1=find(AgePattern_gvtopo==-2)';
-label2=find(AgePattern_gstopo==-1)';
-
-label=intersect(label1,label2);
-Out=y_Atlas246toAAL116(label1);
-    
     
     
     
