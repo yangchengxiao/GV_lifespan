@@ -1,51 +1,57 @@
 %% Calculate the GV, ROIV and GVtopo   YCX 2021.9.22
 clear;clc;close all
-sub_path='E:\GV_2021_9_16\lifespan\DATA\FunRawARWSCF';
-mask_path='E:\Mask\BN_Atlas_246_3mm.nii';
+sub_path='G:\DataBase\SALD\FunRawARWSCF';
+mask_path='F:\Mask\BN_Atlas_246_3mm.nii';
 % gv
-result_path='E:\GV_2021_9_16\lifespan\result\FunRawARWSCF\GV';
+result_path='F:\Projects\GV\lifespan\result\FunRawARWSCF\GV';
 mkdir(result_path)
 y_gv(sub_path,mask_path,result_path,3);
 
 % Calculate the GV, ROIV and GVtopo   --- GSR
 clear;clc;close all
-sub_path='E:\GV_2021_9_16\lifespan\DATA\FunRawARWSCF';
-mask_path='E:\Mask\BN_Atlas_246_3mm.nii';
+sub_path='G:\DataBase\SALD\FunRawARWSCF';
+mask_path='F:\Mask\BN_Atlas_246_3mm.nii';
 % gv_gsr
-result_path='E:\GV_2021_9_16\lifespan\result\FunRawARWSCF\GV_GSR';
+result_path='F:\Projects\GV\lifespan\result\FunRawARWSCF\GV_GSR';
 mkdir(result_path)
 y_gv_gsr(sub_path,mask_path,result_path,3);
 
-
 % Calculate the GS, ROIS and GStopo
 clear;clc;close all
-sub_path='E:\GV_2021_9_16\lifespan\DATA\FunRawARWSCF';
-mask_path='E:\Mask\BN_Atlas_246_3mm.nii';
+sub_path='G:\DataBase\SALD\FunRawARWSCF';
+mask_path='F:\Mask\BN_Atlas_246_3mm.nii';
 % gs
-result_path='E:\GV_2021_9_16\lifespan\result\FunRawARWSCF\GS';
+result_path='F:\Projects\GV\lifespan\result\FunRawARWSCF\GS';
 mkdir(result_path)
 y_gs(sub_path,mask_path,result_path,3);
 
-%% power spectrum of GV
+%% Calculate the GS, ROIS and GStopo  -- gvr
 clear;clc;close all
-GV_path='E:\GV_2021_9_16\lifespan\result\FunRawARWSC\GV';
-result_path='E:\GV_2021_9_16\lifespan\result\FunRawARWSC\GV_PowerSpec';
-mkdir(result_path)
+gs_path='F:\Projects\GV\SALD\result\FunRawARWSCF\GS';
+gv_path='F:\Projects\GV\SALD\result\FunRawARWSCF\GV';
+result_path='F:\Projects\GV\SALD\result\FunRawARWSCF\GS_GVR';
+mkdir(result_path);
 
-TR=2;
-fs=1/TR;
-nfft= 2^nextpow2(225);
-window=hamming(16); %海明窗
-overlap=8; %数据重叠50%
+sub_dir=dir(gs_path);
+sub_dir(1:2)=[];
+for isub=1:length(sub_dir)
+    load(fullfile(gs_path,sub_dir(isub).name));   % load gs
+    load(fullfile(gv_path,sub_dir(isub).name));   % load gv
+    % regress
+    x=[ones(length(gs),1),gv'];
+    [~,~,gs]=regress(gs',x);
+    gs=mapminmax(gs',min(gs),max(gs));    % normalization
+    for iroi=1:size(rois,1)
+        [~,~,rois(iroi,:)]=regress(rois(iroi,:)',x);
+        rois(iroi,:)=mapminmax(rois(iroi,:)',min(rois(iroi,:)),max(rois(iroi,:)));    % normalization
+        [r,p]=corrcoef(gs,rois(iroi,:));
+        gs_topo.r(iroi)=r(2);
+        gs_topo.p(iroi)=p(2);
+    end
+    gs_topo.z=a_fishertrans(gs_topo.r);
+    fname=fullfile(result_path,sub_dir(isub).name);
+    save(fname,'gs','rois','gs_topo')
+end
 
-y_PowerSpectrum(GV_path,result_path,window,overlap,nfft,fs)
 
 
-%% Calculate the ReHo   YCX 2021.9.22
-clear;clc;close all
-sub_path='E:\GV_2021_9_16\lifespan\DATA\FunRawARWSCF';
-mask_path='E:\Mask\BN_Atlas_246_3mm.nii';
-% gv
-result_path='E:\GV_2021_9_16\lifespan\result\FunRawARWSCF\GV';
-mkdir(result_path)
-y_gv(sub_path,mask_path,result_path,3);
